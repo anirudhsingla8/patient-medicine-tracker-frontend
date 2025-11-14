@@ -19,10 +19,12 @@ import Alert from '@mui/material/Alert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MedicationIcon from '@mui/icons-material/Medication';
+import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
+import MedicineFormDialog from '../MedicineFormDialog';
 
 import { getMedicinesForProfile, takeDose } from '../../../services/medicines';
 import { getProfileById } from '../../../services/profiles';
@@ -49,6 +51,7 @@ export default function ProfileMedicinesListPage() {
   const qc = useQueryClient();
   const [query, setQuery] = useState('');
   const [takingId, setTakingId] = useState<string | null>(null);
+  const [openAdd, setOpenAdd] = useState(false);
 
   const {
     data: profile,
@@ -126,6 +129,14 @@ export default function ProfileMedicinesListPage() {
             startIcon={<ArrowBackIcon />}
           >
             Back to Profiles
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenAdd(true)}
+            disabled={!profileId}
+          >
+            Add medicine
           </Button>
           <Button
             onClick={() => refetch()}
@@ -239,6 +250,13 @@ export default function ProfileMedicinesListPage() {
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+      {profileId && (
+        <MedicineFormDialog
+          open={openAdd}
+          profileId={profileId as string}
+          onClose={() => setOpenAdd(false)}
+        />
       )}
     </Box>
   );

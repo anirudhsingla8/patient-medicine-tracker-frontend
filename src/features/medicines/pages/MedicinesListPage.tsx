@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -16,8 +16,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import MedicationIcon from '@mui/icons-material/Medication';
-import { getAllMedicines, takeDose } from '../../../services/medicines';
+import { getAllMedicines } from '../../../services/medicines';
 import type { Medicine } from '../../../types/api';
 
 function daysUntil(dateStr?: string) {
@@ -37,27 +36,13 @@ function ExpiryChip({ expiryDate }: { expiryDate?: string }) {
 }
 
 export default function MedicinesListPage() {
-  const qc = useQueryClient();
   const [query, setQuery] = useState('');
-  const [takingId, setTakingId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['medicines'],
     queryFn: getAllMedicines,
   });
 
-  const takeDoseMut = useMutation({
-    mutationFn: (id: string) => takeDose(id),
-    onMutate: (id: string) => {
-      setTakingId(id);
-    },
-    onSettled: () => {
-      setTakingId(null);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['medicines'] });
-    },
-  });
 
   const filtered: Medicine[] = useMemo(() => {
     const list = data || [];
@@ -113,13 +98,12 @@ export default function MedicinesListPage() {
                 <TableCell>Quantity</TableCell>
                 <TableCell>Expiry</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={5} align="center">
                     <Typography color="text.secondary">No medicines found.</Typography>
                   </TableCell>
                 </TableRow>
@@ -155,17 +139,6 @@ export default function MedicinesListPage() {
                           />
                           <ExpiryChip expiryDate={m.expiryDate} />
                         </Stack>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Button
-                          size="small"
-                          variant="contained"
-                          startIcon={<MedicationIcon />}
-                          onClick={() => takeDoseMut.mutate(m.id)}
-                          disabled={takingId === m.id}
-                        >
-                          {takingId === m.id ? 'Recording...' : 'Take dose'}
-                        </Button>
                       </TableCell>
                     </TableRow>
                   );
