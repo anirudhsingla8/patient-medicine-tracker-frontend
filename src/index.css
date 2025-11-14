@@ -1,0 +1,43 @@
+/* Global base styles - keep it minimal and let MUI theme control visuals */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background-color: #f5f7fb; /* should match theme.palette.background.default */
+  color: rgba(0, 0, 0, 0.87);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Reset anchor defaults; let MUI Link/Button control styles */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Media defaults */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Let MUI control buttons; remove template styles */
+button {
+  font: inherit;
+}
