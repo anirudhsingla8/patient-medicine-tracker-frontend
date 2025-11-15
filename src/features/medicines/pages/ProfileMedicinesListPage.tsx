@@ -77,7 +77,7 @@ export default function ProfileMedicinesListPage() {
   });
 
   const takeDoseMut = useMutation({
-    mutationFn: (id: string) => takeDose(id),
+    mutationFn: (id: string) => takeDose(profileId, id),
     onMutate: (id: string) => {
       setTakingId(id);
     },
