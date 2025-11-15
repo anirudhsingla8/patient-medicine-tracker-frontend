@@ -13,6 +13,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { extractErrorMessage } from '../../services/axiosClient';
 import { login } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
 
@@ -28,6 +29,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const params = new URLSearchParams(location.search);
+  const sessionExpired = params.get('msg') === 'session_expired';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,11 +43,7 @@ export default function LoginPage() {
       const to = location?.state?.from?.pathname ?? '/app/dashboard';
       navigate(to, { replace: true });
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Login failed. Please check your credentials.';
-      setError(msg);
+      setError(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -60,6 +59,7 @@ export default function LoginPage() {
           </Stack>
 
           {location?.state?.message && <Alert severity="success">{location.state.message}</Alert>}
+          {sessionExpired && <Alert severity="warning">Your session has expired. Please sign in again.</Alert>}
           {error && <Alert severity="error">{error}</Alert>}
 
           <TextField

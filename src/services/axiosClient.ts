@@ -23,6 +23,30 @@ function clearTokens() {
   }
 }
 
+export function extractErrorMessage(error: unknown): string {
+  try {
+    const anyErr = error as any;
+    if (anyErr?.response) {
+      const data = anyErr.response.data;
+      if (typeof data === 'string') return data;
+      if (typeof data?.message === 'string' && data.message) return data.message;
+      if (typeof data?.error === 'string' && data.error) return data.error;
+      if (Array.isArray(data?.errors) && data.errors.length) {
+        const first = data.errors[0];
+        if (typeof first === 'string') return first;
+        if (typeof (first as any)?.message === 'string') return (first as any).message;
+      }
+      if (Array.isArray(data?.details) && data.details.length) {
+        const first = data.details[0];
+        if (typeof first === 'string') return first;
+        if (typeof (first as any)?.message === 'string') return (first as any).message;
+      }
+    }
+    if ((anyErr as any)?.message) return (anyErr as any).message as string;
+  } catch {}
+  return 'Something went wrong. Please try again.';
+}
+
 export const axiosClient = axios.create({
   baseURL: API_BASE,
   headers: {
@@ -40,14 +64,27 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Basic 401 handling: clear tokens so UI reacts (ProtectedRoute) and let the request fail
+// Global error handling: normalize errors and handle auth failures
 axiosClient.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error?.response?.status === 401) {
+    const status = error?.response?.status;
+
+    if (status === 401 || status === 403) {
       clearTokens();
-      // Do not force redirect here; ProtectedRoute will handle redirect on next render
+      // Redirect to login with a message if not already there
+      if (typeof window !== 'undefined') {
+        const isOnLogin = window.location.pathname.startsWith('/login');
+        if (!isOnLogin) {
+          const url = new URL(window.location.href);
+          const from = url.pathname + url.search + url.hash;
+          const params = new URLSearchParams({ msg: 'session_expired', from });
+          window.location.assign(`/login?${params.toString()}`);
+        }
+      }
     }
+
+    // Always reject so callers can display messages via extractErrorMessage
     return Promise.reject(error);
   }
 );

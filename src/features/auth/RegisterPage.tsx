@@ -11,6 +11,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { extractErrorMessage } from '../../services/axiosClient';
 import { register } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
 
@@ -47,11 +48,7 @@ export default function RegisterPage() {
       refreshAuth();
       navigate('/app/dashboard', { replace: true });
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Registration failed. Please try a different email.';
-      setError(msg);
+      setError(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 # Project Index — Medicine Tracker Frontend
 
-A complete, navigable index of this codebase: structure, routing, features, services, state, types, config, and key dependencies.
+A complete, navigable index of this codebase: structure, routing, features, services, state, types, config, and key dependencies. This document reflects the current repository state and code behaviors verified from source.
 
 Repository: medicine-tracker-frontend
 Build tool: Vite (rolldown-vite@7.2.2)
@@ -57,7 +57,8 @@ HTTP: Axios
    └─ features/
       ├─ auth/
       │  ├─ LoginPage.tsx
-      │  └─ RegisterPage.tsx
+      │  ├─ RegisterPage.tsx
+      │  └─ ForgotPasswordPage.tsx
       ├─ dashboard/
       │  └─ DashboardPage.tsx
       ├─ medicines/
@@ -164,6 +165,7 @@ src/App.tsx
 - Public:
   - /login → <LoginPage />
   - /register → <RegisterPage />
+  - /forgot-password → <ForgotPasswordPage />
 - Root redirect:
   - / → Navigate to /app/dashboard
 - Protected (via <ProtectedRoute />) nesting:
@@ -179,7 +181,7 @@ src/App.tsx
 
 src/routes/ProtectedRoute.tsx
 - Reads auth state from Zustand store
-- If not authenticated: Navigate to /login with { from: location }
+- If not authenticated: Navigate to /login with { from: location, message: "Please sign in to continue." }
 - Else: renders <Outlet />
 
 Layout & Navigation (src/components/AppShell.tsx)
@@ -194,14 +196,17 @@ Auth (src/features/auth)
 - LoginPage.tsx
   - Email/password form, Remember me
   - login() service; on success sets email in store, refreshes auth, navigates to previous route or /app/dashboard
+  - Displays session-expired warning when URL contains ?msg=session_expired
 - RegisterPage.tsx
   - Email/password/confirm form
   - register() service; on success sets email, refreshes auth, navigates /app/dashboard
+- ForgotPasswordPage.tsx
+  - Email + new password + confirm; basic validations
+  - forgotPassword() service; on success navigates to /login with success message (no auto-login)
 
 Dashboard (src/features/dashboard)
 - DashboardPage.tsx
-  - Fetches backend health via useQuery(['health'], getHealth)
-  - Displays status/version/timestamp; Refresh button
+  - Fetches backend health via useQuery(['health'], getHealth) and displays status/version/timestamp; Refresh button
 
 Profiles (src/features/profiles)
 - ProfilesListPage.tsx
@@ -222,10 +227,12 @@ Medicines (src/features/medicines)
   - useQuery(['profile', profileId], getProfileById)
   - useQuery(['medicines', profileId], getMedicinesForProfile)
   - takeDose mutation (takeDose(profileId, id)) with pending state per row; delete uses deleteMedicine(profileId, id)
-  - Breadcrumbs; Add medicine opens MedicineFormDialog
+  - Breadcrumbs; Add/Edit medicine via dialogs, Delete confirmation
 - MedicineFormDialog.tsx
-  - Controlled form for createMedicine(profileId, payload)
-  - Optional image upload via uploadMedicineImage(file)
+  - Controlled form for createMedicine(profileId, payload); optional image upload via uploadMedicineImage(file)
+  - On success invalidates ['medicines', profileId]
+- MedicineEditDialog.tsx
+  - Controlled edit form for updateMedicine(profileId, id, payload); optional image upload
   - On success invalidates ['medicines', profileId]
 
 Schedules (src/features/schedules)
@@ -235,26 +242,21 @@ Schedules (src/features/schedules)
   - useQuery(['schedules', medicineId], getSchedulesForMedicine)
   - CRUD via createSchedule/updateSchedule/deleteSchedule mutations
   - ScheduleFormDialog for create/edit; ConfirmDialog for delete
-  - Breadcrumbs linking back to profile medicines when profileId is known
+  - Breadcrumbs linking back to relevant profile medicines when profileId is known
 - ScheduleFormDialog.tsx
   - Validates timeOfDay as HH:mm:ss, frequency select, Active toggle
 
 --------------------------------------------------------------------------------
-7) Shared Components
---------------------------------------------------------------------------------
-src/components/AppShell.tsx
-- Layout wrapper with AppBar/Desktop nav/Mobile drawer, renders <Outlet />
-
-src/components/ConfirmDialog.tsx
-- Reusable confirm dialog with customizable labels, color, and loading state
-
---------------------------------------------------------------------------------
-8) Services (API layer)
+7) Services (API layer)
 --------------------------------------------------------------------------------
 src/services/axiosClient.ts
 - Base URL: import.meta.env.VITE_API_BASE_URL (no trailing slash), default http://localhost:8080
 - Attaches Authorization: Bearer <token> if present in localStorage/sessionStorage
-- 401 interceptor clears tokens, allows ProtectedRoute to redirect on next render
+- Response interceptor:
+  - On 401/403: clears tokens and performs hard redirect to /login?msg=session_expired&from=<current>
+  - Always rejects to allow UI to surface errors via extractErrorMessage
+- Exported helper:
+  - extractErrorMessage(error): normalizes error messages from Axios responses, arrays, details, or generic Error
 
 src/services/auth.ts
 - Types: AuthResponse, LoginRequest, RegisterRequest, ForgotPasswordRequest
@@ -262,10 +264,12 @@ src/services/auth.ts
 - Endpoints:
   - POST /api/auth/login
   - POST /api/auth/register
-  - POST /api/auth/forgot-password (auto-login per blueprint)
+  - POST /api/auth/forgot-password (no auto-login; user must sign in manually)
   - POST /api/users/fcm-token
   - GET  / (health)
-- clearStoredToken(), logout()
+- Helpers:
+  - clearStoredToken(), logout()
+  - getHealth()
 
 src/services/profiles.ts
 - GET  /api/profiles
@@ -284,6 +288,7 @@ src/services/medicines.ts
 - DELETE /api/profiles/{profileId}/medicines/{id}
 - POST /api/profiles/{profileId}/medicines/{id}/takedose
 - POST /api/medicines/upload-image (multipart) → returns raw string (imageUrl)
+- Notes: transforms camelCase to API fields (e.g. image_url) and prunes undefined keys
 
 src/services/schedules.ts
 - Types: ScheduleCreateRequest, ScheduleUpdateRequest
@@ -296,13 +301,13 @@ src/services/schedules.ts
 - DELETE /api/schedules/{scheduleId}
 
 src/services/globalMedicines.ts
-- CRUD + search endpoints for global medicines catalog
+- CRUD + search endpoints for global medicines catalog (UI not yet implemented)
 
 --------------------------------------------------------------------------------
-9) State Management
+8) State Management
 --------------------------------------------------------------------------------
 src/store/authStore.ts (Zustand)
-- State: email: string | null; isAuthenticated: boolean
+- State: email: string | null; isAuthenticated: boolean (derived from presence of stored token)
 - Actions:
   - setEmail(email)
   - refreshAuth() → recompute isAuthenticated from stored tokens
@@ -310,22 +315,22 @@ src/store/authStore.ts (Zustand)
 - Token detection checks both localStorage and sessionStorage for jwt_token/token
 
 --------------------------------------------------------------------------------
-10) Types (Domain models)
+9) Types (Domain models)
 --------------------------------------------------------------------------------
 src/types/auth.ts
-- AuthResponse: { token, email }
+- AuthResponse: { token: string; email: string }
 - LoginRequest, RegisterRequest
-- ForgotPasswordRequest: { email, newPassword }
+- ForgotPasswordRequest: { email: string; newPassword: string }
 
 src/types/api.ts
 - Composition: { name, strengthValue, strengthUnit }
-- Medicine: includes id, userId, profileId, name, dosage, quantity, expiryDate, status, timestamps, etc.
+- Medicine: includes id, userId, profileId, name, dosage, quantity, expiryDate, status, timestamps, and optional fields (category, notes, form, imageUrl, composition)
 - Profile: { id, userId, name, createdAt }
 - Schedule: { id, medicineId, profileId, userId, timeOfDay, frequency, isActive, createdAt }
 - GlobalMedicine: catalog fields with metadata
 
 --------------------------------------------------------------------------------
-11) Data Fetching (TanStack Query)
+10) Data Fetching (TanStack Query)
 --------------------------------------------------------------------------------
 Query keys used:
 - ['health']
@@ -342,90 +347,79 @@ Patterns:
 - Loading and error states wired to MUI components
 
 --------------------------------------------------------------------------------
-12) Authentication Flow
+11) Error Handling Conventions
 --------------------------------------------------------------------------------
-- On successful login/register/forgot-password:
-  - Token stored in localStorage or sessionStorage based on remember flag
-  - Axios client attaches Authorization header automatically
-  - authStore.refreshAuth() toggles isAuthenticated
-- ProtectedRoute guards all /app routes, redirecting to /login when unauthenticated
-- axios 401 interceptor clears tokens; route guard will redirect on next render
+- Global:
+  - axiosClient response interceptor clears tokens and redirects to /login with msg=session_expired on 401/403.
+- UI Helpers:
+  - extractErrorMessage(error) imported from services/axiosClient is used in form pages/dialogs to standardize error surfaces.
+- Pages updated to use extractErrorMessage:
+  - LoginPage.tsx, RegisterPage.tsx, ForgotPasswordPage.tsx
+  - MedicineFormDialog.tsx, MedicineEditDialog.tsx
+- Login UX:
+  - LoginPage reads ?msg=session_expired to display a warning and asks the user to sign in again.
 
 --------------------------------------------------------------------------------
-13) Navigation Surfaces
+12) Navigation Surfaces
 --------------------------------------------------------------------------------
 - Desktop AppBar links (AppShell): /app/dashboard, /app/medicines, /app/profiles, Logout
 - Mobile Drawer with identical links + logout
 - Breadcrumbs in profile/medicine schedule pages for hierarchical navigation
 
 --------------------------------------------------------------------------------
-14) Environment
+13) Module Exports Catalog (Key)
 --------------------------------------------------------------------------------
-- VITE_API_BASE_URL (no trailing slash), defaults to http://localhost:8080 when missing
-- Optional VITE_APP_NAME (declared but not referenced yet in code)
+Components/Pages (default exports):
+- App.tsx → App (routes)
+- components/AppShell.tsx → AppShell
+- routes/ProtectedRoute.tsx → ProtectedRoute
+- features/auth/LoginPage.tsx → LoginPage
+- features/auth/RegisterPage.tsx → RegisterPage
+- features/auth/ForgotPasswordPage.tsx → ForgotPasswordPage
+- features/dashboard/DashboardPage.tsx → DashboardPage
+- features/medicines/pages/MedicinesListPage.tsx → MedicinesListPage
+- features/medicines/pages/ProfileMedicinesListPage.tsx → ProfileMedicinesListPage
+- features/medicines/MedicineFormDialog.tsx → MedicineFormDialog
+- features/medicines/MedicineEditDialog.tsx → MedicineEditDialog
+- features/profiles/ProfilesListPage.tsx → ProfilesListPage
+- features/profiles/ProfileFormDialog.tsx → ProfileFormDialog
+- features/schedules/SchedulesListPage.tsx → SchedulesListPage
+- features/schedules/ScheduleFormDialog.tsx → ScheduleFormDialog
+- components/ConfirmDialog.tsx → ConfirmDialog
+
+Services (named exports):
+- services/axiosClient.ts → axiosClient, extractErrorMessage
+- services/auth.ts → login, register, forgotPassword, logout, clearStoredToken, updateFcmToken, getHealth
+- services/medicines.ts → getAllMedicines, getMedicinesForProfile, getMedicineById, createMedicine, updateMedicine, deleteMedicine, takeDose, uploadMedicineImage
+- services/profiles.ts → getProfiles, getProfileById, createProfile, updateProfile, deleteProfile
+- services/schedules.ts → getSchedulesForMedicine, getSchedulesForProfile, getSchedules, getScheduleById, createSchedule, updateSchedule, deleteSchedule
+- services/globalMedicines.ts → catalog CRUD/search (various)
+
+Store:
+- store/authStore.ts → useAuthStore
+
+Types:
+- types/auth.ts → AuthResponse, LoginRequest, RegisterRequest, ForgotPasswordRequest
+- types/api.ts → Composition, Medicine, Profile, Schedule, GlobalMedicine
 
 --------------------------------------------------------------------------------
-15) Import Relationships (Condensed)
---------------------------------------------------------------------------------
-- main.tsx → App, theme, providers (React Query, Router, MUI)
-- App.tsx → ProtectedRoute, AppShell, all page components
-- AppShell → authStore (logout), react-router links, MUI UI elements
-- ProtectedRoute → authStore.isAuthenticated
-- Pages → services via axiosClient, types, dialogs, ConfirmDialog
-- Dialogs → mutations (create/update/delete), invalidate query keys
-- services/* → axiosClient base + endpoints
-- axiosClient → import.meta.env.VITE_API_BASE_URL, token attachments
-- store/authStore → services/auth.clearStoredToken
-
---------------------------------------------------------------------------------
-16) Useful Cross-references
---------------------------------------------------------------------------------
-- Entry: src/main.tsx
-- Route config: src/App.tsx
-- ProtectedRoute: src/routes/ProtectedRoute.tsx
-- Layout: src/components/AppShell.tsx
-- Theme: src/theme.ts
-- Styles: src/App.css, src/index.css
-- Pages:
-  - Auth: src/features/auth/LoginPage.tsx, RegisterPage.tsx
-  - Dashboard: src/features/dashboard/DashboardPage.tsx
-  - Profiles: src/features/profiles/ProfilesListPage.tsx
-  - Medicines:
-    - All: src/features/medicines/pages/MedicinesListPage.tsx
-    - Per profile: src/features/medicines/pages/ProfileMedicinesListPage.tsx
-  - Schedules (per medicine): src/features/schedules/SchedulesListPage.tsx
-- Dialogs:
-  - Profiles: src/features/profiles/ProfileFormDialog.tsx
-  - Medicines: src/features/medicines/MedicineFormDialog.tsx, src/features/medicines/MedicineEditDialog.tsx
-  - Schedules: src/features/schedules/ScheduleFormDialog.tsx
-  - Confirm: src/components/ConfirmDialog.tsx
-- Services:
-  - Auth: src/services/auth.ts
-  - Profiles: src/services/profiles.ts
-  - Medicines: src/services/medicines.ts
-  - Schedules: src/services/schedules.ts
-  - Global meds: src/services/globalMedicines.ts
-  - Axios client: src/services/axiosClient.ts
-- State: src/store/authStore.ts
-- Types: src/types/auth.ts, src/types/api.ts
-- Config: eslint.config.js, tsconfig*.json, vite.config.ts
-- Env: .env.example
-
---------------------------------------------------------------------------------
-17) Operational Notes
+14) Environment & Operational Notes
 --------------------------------------------------------------------------------
 - Development: npm run dev (http://localhost:5173)
 - Build: npm run build (type-check + bundle)
 - Preview: npm run preview
-- API base defaults to http://localhost:8080, ensure backend CORS allows Vite origin
+- API base defaults to http://localhost:8080; ensure backend CORS allows Vite origin
 - Image upload endpoint returns a raw string body; axios transformResponse disabled to consume as-is
+- Auth:
+  - Tokens stored in localStorage/sessionStorage ('jwt_token' and 'token')
+  - axiosClient attaches Authorization header when present
+  - 401/403 triggers hard redirect to /login?msg=session_expired&from=..., Login page shows warning
 
 --------------------------------------------------------------------------------
-18) Gaps / Future Enhancements (from README and patterns)
+15) Gaps / Future Enhancements
 --------------------------------------------------------------------------------
-- Add forgot password UI route (/forgot-password) to match LoginPage link
 - Expand global medicines UI using services/globalMedicines.ts
-- Pagination and advanced error handling on list pages
-- Push notifications (FCM token update endpoint exists)
-- Centralized query keys/enums for consistency
+- Pagination/filters for list pages (profiles, medicines, schedules)
+- Centralized query keys/util enums for consistency
 - Extract date/time and chip helpers into shared utilities
+- Better empty/zero-state designs and skeleton loaders

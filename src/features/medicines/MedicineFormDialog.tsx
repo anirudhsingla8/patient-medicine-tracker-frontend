@@ -11,6 +11,7 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { extractErrorMessage } from '../../services/axiosClient';
 import type { Medicine } from '../../types/api';
 import {
   createMedicine,
@@ -136,11 +137,7 @@ export default function MedicineFormDialog({ open, profileId, onClose }: Props) 
       resetForm();
       onClose();
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to create medicine. Please try again.';
-      setErrorMsg(msg);
+      setErrorMsg(extractErrorMessage(err));
     }
   };
 

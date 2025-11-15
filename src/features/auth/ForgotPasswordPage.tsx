@@ -11,6 +11,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { extractErrorMessage } from '../../services/axiosClient';
 import { forgotPassword } from '../../services/auth';
 
 export default function ForgotPasswordPage() {
@@ -46,11 +47,7 @@ export default function ForgotPasswordPage() {
       await forgotPassword({ email, newPassword: password }, { remember: true });
       navigate('/login', { replace: true, state: { message: 'Password changed successfully. Please sign in.' } });
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Password reset failed. Please try again.';
-      setError(msg);
+      setError(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }

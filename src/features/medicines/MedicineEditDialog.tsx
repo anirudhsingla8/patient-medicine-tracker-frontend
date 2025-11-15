@@ -11,6 +11,7 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { extractErrorMessage } from '../../services/axiosClient';
 
 import type { Medicine } from '../../types/api';
 import {
@@ -141,11 +142,7 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
 
       await updateMut.mutateAsync(payload);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to update medicine. Please try again.';
-      setErrorMsg(msg);
+      setErrorMsg(extractErrorMessage(err));
     }
   };
 
