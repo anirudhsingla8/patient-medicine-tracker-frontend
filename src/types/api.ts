@@ -8,6 +8,7 @@ export type Medicine = {
   id: string;
   userId: string;
   profileId: string;
+  profileName?: string;
   name: string;
   imageUrl?: string;
   dosage?: string;

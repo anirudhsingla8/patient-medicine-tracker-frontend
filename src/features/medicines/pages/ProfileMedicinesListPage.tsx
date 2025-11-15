@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -22,11 +22,15 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
 import MedicineFormDialog from '../MedicineFormDialog';
+import MedicineEditDialog from '../MedicineEditDialog';
+import ConfirmDialog from '../../../components/ConfirmDialog';
 
-import { getMedicinesForProfile, takeDose } from '../../../services/medicines';
+import { getMedicinesForProfile, takeDose, deleteMedicine } from '../../../services/medicines';
 import { getProfileById } from '../../../services/profiles';
 import type { Medicine, Profile } from '../../../types/api';
 
@@ -48,10 +52,12 @@ function ExpiryChip({ expiryDate }: { expiryDate?: string }) {
 
 export default function ProfileMedicinesListPage() {
   const { profileId } = useParams();
-  const qc = useQueryClient();
   const [query, setQuery] = useState('');
   const [takingId, setTakingId] = useState<string | null>(null);
   const [openAdd, setOpenAdd] = useState(false);
+  const [selected, setSelected] = useState<Medicine | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const {
     data: profile,
@@ -76,8 +82,9 @@ export default function ProfileMedicinesListPage() {
     enabled: !!profileId,
   });
 
-  const takeDoseMut = useMutation({
-    mutationFn: (id: string) => takeDose(profileId, id),
+  const takeDoseMut = useMutation<Medicine, Error, string>({
+    mutationKey: ['takeDose', profileId],
+    mutationFn: (id: string) => takeDose(profileId as string, id),
     onMutate: (id: string) => {
       setTakingId(id);
     },
@@ -85,9 +92,26 @@ export default function ProfileMedicinesListPage() {
       setTakingId(null);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['medicines', profileId] });
+      refetch();
     },
   });
+
+  const deleteMut = useMutation<void, Error, string>({
+    mutationKey: ['deleteMedicine', profileId],
+    mutationFn: (id: string) => deleteMedicine(profileId as string, id),
+    onSuccess: () => {
+      refetch();
+    },
+    onSettled: () => {
+      setDeleteOpen(false);
+      setSelected(null);
+    },
+  });
+
+  const onConfirmDelete = async () => {
+    if (!selected) return;
+    await deleteMut.mutateAsync(selected.id);
+  };
 
   const filtered: Medicine[] = useMemo(() => {
     const list = data || [];
@@ -225,6 +249,29 @@ export default function ProfileMedicinesListPage() {
                         <Stack direction="row" spacing={1} justifyContent="flex-end">
                           <Button
                             size="small"
+                            variant="text"
+                            startIcon={<EditOutlinedIcon />}
+                            onClick={() => {
+                              setSelected(m);
+                              setEditOpen(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            variant="text"
+                            startIcon={<DeleteOutlineIcon />}
+                            onClick={() => {
+                              setSelected(m);
+                              setDeleteOpen(true);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                          <Button
+                            size="small"
                             component={RouterLink}
                             to={`/app/medicines/${m.id}/schedules`}
                             variant="outlined"
@@ -258,6 +305,32 @@ export default function ProfileMedicinesListPage() {
           onClose={() => setOpenAdd(false)}
         />
       )}
+
+      {profileId && selected && (
+        <MedicineEditDialog
+          open={editOpen}
+          profileId={profileId as string}
+          medicine={selected}
+          onClose={() => {
+            setEditOpen(false);
+            setSelected(null);
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete medicine?"
+        message={`This will permanently remove "${selected?.name ?? ''}". This action cannot be undone.`}
+        confirmLabel={deleteMut.isPending ? 'Deleting...' : 'Delete'}
+        loading={deleteMut.isPending}
+        confirmColor="error"
+        onClose={() => {
+          setDeleteOpen(false);
+          setSelected(null);
+        }}
+        onConfirm={onConfirmDelete}
+      />
     </Box>
   );
 }

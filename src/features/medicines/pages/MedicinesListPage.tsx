@@ -16,6 +16,8 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import Link from '@mui/material/Link';
+import { Link as RouterLink } from 'react-router-dom';
 import { getAllMedicines } from '../../../services/medicines';
 import type { Medicine } from '../../../types/api';
 
@@ -94,6 +96,7 @@ export default function MedicinesListPage() {
             <TableHead sx={{ bgcolor: 'grey.50' }}>
               <TableRow>
                 <TableCell>Name</TableCell>
+                <TableCell>Profile</TableCell>
                 <TableCell>Dosage</TableCell>
                 <TableCell>Quantity</TableCell>
                 <TableCell>Expiry</TableCell>
@@ -103,7 +106,7 @@ export default function MedicinesListPage() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={6} align="center">
                     <Typography color="text.secondary">No medicines found.</Typography>
                   </TableCell>
                 </TableRow>
@@ -121,6 +124,15 @@ export default function MedicinesListPage() {
                             </Typography>
                           )}
                         </Stack>
+                      </TableCell>
+                      <TableCell>
+                        {m.profileName ? (
+                          <Link component={RouterLink} to={`/app/profiles/${m.profileId}/medicines`}>
+                            {m.profileName}
+                          </Link>
+                        ) : (
+                          '-'
+                        )}
                       </TableCell>
                       <TableCell>{m.dosage || '-'}</TableCell>
                       <TableCell>

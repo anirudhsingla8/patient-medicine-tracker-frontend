@@ -46,7 +46,7 @@ export async function updateMedicine(profileId: string, id: string, payload: Med
     name: payload.name,
     dosage: payload.dosage,
     quantity: payload.quantity,
-    expiry_date: payload.expiryDate,
+    expiryDate: payload.expiryDate,
     category: payload.category,
     notes: payload.notes,
     form: payload.form,
