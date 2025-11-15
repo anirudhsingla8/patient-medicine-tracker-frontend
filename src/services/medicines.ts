@@ -35,7 +35,29 @@ export async function getMedicineById(id: string): Promise<Medicine> {
 }
 
 export async function createMedicine(profileId: string, payload: MedicineCreateRequest): Promise<Medicine> {
-  const res = await axiosClient.post<Medicine>(`/api/profiles/${profileId}/medicines`, payload);
+  // Map to API payload; backend expects snake_case for some fields
+  const apiPayload: any = {
+    name: payload.name,
+    dosage: payload.dosage,
+    quantity: payload.quantity,
+    expiryDate: payload.expiryDate,
+    category: payload.category,
+    notes: payload.notes,
+    form: payload.form,
+    image_url: (payload as any).imageUrl ?? undefined,
+    composition: payload.composition?.map((c) => ({
+      name: c.name,
+      strengthValue: (c as any).strengthValue,
+      strengthUnit: (c as any).strengthUnit,
+    })),
+  };
+
+  // Remove undefined keys to avoid overriding with null/undefined
+  Object.keys(apiPayload).forEach((k) => {
+    if (apiPayload[k] === undefined) delete apiPayload[k];
+  });
+
+  const res = await axiosClient.post<Medicine>(`/api/profiles/${profileId}/medicines`, apiPayload);
   return res.data;
 }
 
@@ -53,8 +75,8 @@ export async function updateMedicine(profileId: string, id: string, payload: Med
     image_url: (payload as any).imageUrl ?? undefined,
     composition: payload.composition?.map((c) => ({
       name: c.name,
-      strength_value: (c as any).strengthValue,
-      strength_unit: (c as any).strengthUnit,
+      strengthValue: (c as any).strengthValue,
+      strengthUnit: (c as any).strengthUnit,
     })),
   };
 

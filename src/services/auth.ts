@@ -47,11 +47,10 @@ export async function register(
 
 export async function forgotPassword(
   payload: ForgotPasswordRequest,
-  options?: { remember?: boolean }
+  _options?: { remember?: boolean }
 ): Promise<AuthResponse> {
   const res = await axiosClient.post<AuthResponse>('/api/auth/forgot-password', payload);
-  // Auto-login after password reset per blueprint
-  storeToken(res.data.token, options?.remember ?? true);
+  // Do NOT auto-login after password reset; user must sign in manually.
   return res.data;
 }
 

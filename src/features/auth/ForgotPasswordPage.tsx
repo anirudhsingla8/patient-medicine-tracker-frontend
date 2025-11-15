@@ -11,13 +11,10 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { register } from '../../services/auth';
-import { useAuthStore } from '../../store/authStore';
+import { forgotPassword } from '../../services/auth';
 
-export default function RegisterPage() {
+export default function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const setEmail = useAuthStore((s) => s.setEmail);
-  const refreshAuth = useAuthStore((s) => s.refreshAuth);
 
   const [email, setEmailInput] = useState('');
   const [password, setPassword] = useState('');
@@ -31,8 +28,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
+    if (!email.trim()) {
+      setError('Email is required.');
+      return;
+    }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError('New password must be at least 6 characters.');
       return;
     }
     if (password !== confirm) {
@@ -42,15 +43,13 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await register({ email, password }, { remember: true });
-      setEmail(res.email ?? email);
-      refreshAuth();
-      navigate('/app/dashboard', { replace: true });
+      await forgotPassword({ email, newPassword: password }, { remember: true });
+      navigate('/login', { replace: true, state: { message: 'Password changed successfully. Please sign in.' } });
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        'Registration failed. Please try a different email.';
+        'Password reset failed. Please try again.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -62,8 +61,8 @@ export default function RegisterPage() {
       <Paper sx={{ p: { xs: 2.5, sm: 4 }, width: '100%', maxWidth: 480, borderRadius: 3 }}>
         <Stack spacing={2} component="form" onSubmit={handleSubmit}>
           <Stack spacing={0.5} sx={{ textAlign: 'center', mb: 1 }}>
-            <Typography variant="h5" fontWeight={700}>Medicine Tracker</Typography>
-            <Typography variant="body2" color="text.secondary">Create your account</Typography>
+            <Typography variant="h5" fontWeight={700}>Reset your password</Typography>
+            <Typography variant="body2" color="text.secondary">Enter your email and a new password</Typography>
           </Stack>
 
           {error && <Alert severity="error">{error}</Alert>}
@@ -80,7 +79,7 @@ export default function RegisterPage() {
           <TextField
             required
             type={showPassword ? 'text' : 'password'}
-            label="Password"
+            label="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
@@ -104,7 +103,7 @@ export default function RegisterPage() {
           <TextField
             required
             type={showConfirm ? 'text' : 'password'}
-            label="Confirm password"
+            label="Confirm new password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
@@ -126,11 +125,11 @@ export default function RegisterPage() {
           />
 
           <Button type="submit" variant="contained" size="large" fullWidth disabled={loading}>
-            {loading ? 'Creating account...' : 'Create account'}
+            {loading ? 'Resetting...' : 'Reset password'}
           </Button>
 
           <Button component={RouterLink} to="/login" sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            Already have an account? Sign in
+            Back to sign in
           </Button>
         </Stack>
       </Paper>

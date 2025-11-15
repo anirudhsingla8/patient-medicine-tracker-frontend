@@ -3,6 +3,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import AppShell from './components/AppShell';
 import LoginPage from './features/auth/LoginPage';
 import RegisterPage from './features/auth/RegisterPage';
+import ForgotPasswordPage from './features/auth/ForgotPasswordPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import MedicinesListPage from './features/medicines/pages/MedicinesListPage';
 import ProfilesListPage from './features/profiles/ProfilesListPage';
@@ -15,6 +16,7 @@ export default function App() {
       {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* Redirect root to app dashboard */}
       <Route path="/" element={<Navigate to="/app/dashboard" replace />} />

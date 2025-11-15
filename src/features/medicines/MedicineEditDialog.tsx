@@ -8,6 +8,9 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import type { Medicine } from '../../types/api';
 import {
@@ -34,6 +37,22 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
   const [notes, setNotes] = useState(medicine.notes ?? '');
   const [form, setForm] = useState(medicine.form ?? '');
   const [file, setFile] = useState<File | null>(null);
+  const [compositionRows, setCompositionRows] = useState<{ name: string; strengthValue: string; strengthUnit: string }[]>([]);
+
+  const addCompositionRow = () =>
+    setCompositionRows((rows) => [...rows, { name: '', strengthValue: '', strengthUnit: '' }]);
+
+  const updateCompositionRow = (
+    index: number,
+    key: 'name' | 'strengthValue' | 'strengthUnit',
+    value: string
+  ) => {
+    setCompositionRows((rows) => rows.map((r, i) => (i === index ? { ...r, [key]: value } : r)));
+  };
+
+  const removeCompositionRow = (index: number) => {
+    setCompositionRows((rows) => rows.filter((_, i) => i !== index));
+  };
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -46,6 +65,13 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
     setCategory(medicine.category ?? '');
     setNotes(medicine.notes ?? '');
     setForm(medicine.form ?? '');
+    setCompositionRows(
+      (medicine.composition || []).map((c) => ({
+        name: c.name ?? '',
+        strengthValue: String(c.strengthValue ?? ''),
+        strengthUnit: c.strengthUnit ?? '',
+      }))
+    );
     setFile(null);
     setErrorMsg(null);
   }, [open, medicine]);
@@ -88,6 +114,19 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
         imageUrl = await uploadMedicineImage(file);
       }
 
+      const compositionPayload = compositionRows
+        .map((r) => ({
+          name: r.name.trim(),
+          strengthValue: r.strengthValue.trim(),
+          strengthUnit: r.strengthUnit.trim(),
+        }))
+        .filter((r) => r.name && r.strengthValue && r.strengthUnit)
+        .map((r) => ({
+          name: r.name,
+          strengthValue: isNaN(Number(r.strengthValue)) ? r.strengthValue : Number(r.strengthValue),
+          strengthUnit: r.strengthUnit,
+        }));
+
       const payload: MedicineUpdateRequest = {
         name: name.trim(),
         dosage: dosage.trim() || undefined,
@@ -97,6 +136,7 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
         notes: notes.trim() || undefined,
         form: form.trim() || undefined,
         imageUrl,
+        ...(compositionPayload.length ? { composition: compositionPayload } : {}),
       };
 
       await updateMut.mutateAsync(payload);
@@ -169,6 +209,41 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
               minRows={2}
               fullWidth
             />
+            <Typography variant="subtitle1" fontWeight={600}>Composition</Typography>
+            <Stack spacing={1}>
+              {compositionRows.map((row, idx) => (
+                <Stack
+                  key={idx}
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1}
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                >
+                  <TextField
+                    label="Component name"
+                    value={row.name}
+                    onChange={(e) => updateCompositionRow(idx, 'name', e.target.value)}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Strength value"
+                    value={row.strengthValue}
+                    onChange={(e) => updateCompositionRow(idx, 'strengthValue', e.target.value)}
+                    sx={{ minWidth: 140 }}
+                  />
+                  <TextField
+                    label="Unit"
+                    value={row.strengthUnit}
+                    onChange={(e) => updateCompositionRow(idx, 'strengthUnit', e.target.value)}
+                    sx={{ minWidth: 120 }}
+                  />
+                  <IconButton aria-label="Remove" color="error" onClick={() => removeCompositionRow(idx)}>
+                    <DeleteOutlineIcon />
+                  </IconButton>
+                </Stack>
+              ))}
+              <Button variant="outlined" onClick={addCompositionRow}>Add component</Button>
+            </Stack>
+
             <Stack direction="row" alignItems="center" spacing={2}>
               <Button variant="outlined" component="label" disabled={updateMut.isPending}>
                 Change image

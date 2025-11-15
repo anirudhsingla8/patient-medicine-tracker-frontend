@@ -9,6 +9,10 @@ import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { login } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
 
@@ -23,6 +27,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +59,7 @@ export default function LoginPage() {
             <Typography variant="body2" color="text.secondary">Sign in to continue</Typography>
           </Stack>
 
+          {location?.state?.message && <Alert severity="success">{location.state.message}</Alert>}
           {error && <Alert severity="error">{error}</Alert>}
 
           <TextField
@@ -67,12 +73,26 @@ export default function LoginPage() {
           />
           <TextField
             required
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword((v) => !v)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <FormControlLabel
             control={<Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
