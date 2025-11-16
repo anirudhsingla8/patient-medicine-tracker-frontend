@@ -1,23 +1,26 @@
-import { useEffect, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import type { Medicine } from '../../types/api';
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { DeleteOutline as DeleteOutlineIcon } from '@mui/icons-material';
+
 import {
   updateMedicine,
   uploadMedicineImage,
   type MedicineUpdateRequest,
 } from '../../services/medicines';
+import type { Medicine } from '../../types/api';
 
 type Props = {
   open: boolean;
@@ -37,7 +40,14 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
   const [notes, setNotes] = useState(medicine.notes ?? '');
   const [form, setForm] = useState(medicine.form ?? '');
   const [file, setFile] = useState<File | null>(null);
-  const [compositionRows, setCompositionRows] = useState<{ name: string; strengthValue: string; strengthUnit: string }[]>([]);
+  const [compositionRows, setCompositionRows] = useState(
+    (medicine.composition || []).map((c) => ({
+      name: c.name ?? '',
+      strengthValue: String(c.strengthValue ?? ''),
+      strengthUnit: c.strengthUnit ?? '',
+    }))
+  );
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const addCompositionRow = () =>
     setCompositionRows((rows) => [...rows, { name: '', strengthValue: '', strengthUnit: '' }]);
@@ -54,30 +64,9 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
     setCompositionRows((rows) => rows.filter((_, i) => i !== index));
   };
 
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    setName(medicine.name ?? '');
-    setDosage(medicine.dosage ?? '');
-    setQuantity(medicine.quantity ?? 1);
-    setExpiryDate(medicine.expiryDate ?? '');
-    setCategory(medicine.category ?? '');
-    setNotes(medicine.notes ?? '');
-    setForm(medicine.form ?? '');
-    setCompositionRows(
-      (medicine.composition || []).map((c) => ({
-        name: c.name ?? '',
-        strengthValue: String(c.strengthValue ?? ''),
-        strengthUnit: c.strengthUnit ?? '',
-      }))
-    );
-    setFile(null);
-    setErrorMsg(null);
-  }, [open, medicine]);
-
   const updateMut = useMutation({
-    mutationFn: (payload: MedicineUpdateRequest) => updateMedicine(profileId, medicine.id, payload),
+    mutationFn: (payload: MedicineUpdateRequest) =>
+      updateMedicine(profileId, medicine.id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['medicines', profileId] });
       onClose();
@@ -123,7 +112,9 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
         .filter((r) => r.name && r.strengthValue && r.strengthUnit)
         .map((r) => ({
           name: r.name,
-          strengthValue: isNaN(Number(r.strengthValue)) ? r.strengthValue : Number(r.strengthValue),
+          strengthValue: isNaN(Number(r.strengthValue))
+            ? r.strengthValue
+            : Number(r.strengthValue),
           strengthUnit: r.strengthUnit,
         }));
 
@@ -209,7 +200,9 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
               minRows={2}
               fullWidth
             />
-            <Typography variant="subtitle1" fontWeight={600}>Composition</Typography>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Composition
+            </Typography>
             <Stack spacing={1}>
               {compositionRows.map((row, idx) => (
                 <Stack
@@ -236,12 +229,18 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
                     onChange={(e) => updateCompositionRow(idx, 'strengthUnit', e.target.value)}
                     sx={{ minWidth: 120 }}
                   />
-                  <IconButton aria-label="Remove" color="error" onClick={() => removeCompositionRow(idx)}>
+                  <IconButton
+                    aria-label="Remove"
+                    color="error"
+                    onClick={() => removeCompositionRow(idx)}
+                  >
                     <DeleteOutlineIcon />
                   </IconButton>
                 </Stack>
               ))}
-              <Button variant="outlined" onClick={addCompositionRow}>Add component</Button>
+              <Button variant="outlined" onClick={addCompositionRow}>
+                Add component
+              </Button>
             </Stack>
 
             <Stack direction="row" alignItems="center" spacing={2}>
@@ -262,12 +261,10 @@ export default function MedicineEditDialog({ open, profileId, medicine, onClose 
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} disabled={updateMut.isPending}>Cancel</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={updateMut.isPending}
-          >
+          <Button onClick={handleClose} disabled={updateMut.isPending}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" disabled={updateMut.isPending}>
             {updateMut.isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>

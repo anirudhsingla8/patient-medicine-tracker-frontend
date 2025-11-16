@@ -11,7 +11,6 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import type { Medicine } from '../../types/api';
 import {
   createMedicine,
   uploadMedicineImage,
@@ -135,10 +134,10 @@ export default function MedicineFormDialog({ open, profileId, onClose }: Props) 
       await createMut.mutateAsync(payload);
       resetForm();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       const msg =
-        err?.response?.data?.message ||
-        err?.message ||
+        (err as any)?.response?.data?.message ||
+        (err as any)?.message ||
         'Failed to create medicine. Please try again.';
       setErrorMsg(msg);
     }

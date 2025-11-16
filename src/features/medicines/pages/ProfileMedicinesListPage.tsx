@@ -308,6 +308,7 @@ export default function ProfileMedicinesListPage() {
 
       {profileId && selected && (
         <MedicineEditDialog
+          key={selected.id}
           open={editOpen}
           profileId={profileId as string}
           medicine={selected}

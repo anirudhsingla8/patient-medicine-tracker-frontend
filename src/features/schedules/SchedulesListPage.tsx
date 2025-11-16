@@ -262,6 +262,7 @@ export default function SchedulesListPage() {
 
       {/* Edit */}
       <ScheduleFormDialog
+        key={selected?.id}
         open={editOpen}
         title="Edit Schedule"
         submitLabel={updateMut.isPending ? "Saving..." : "Save"}

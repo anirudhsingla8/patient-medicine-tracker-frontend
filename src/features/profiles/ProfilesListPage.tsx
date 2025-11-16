@@ -1,29 +1,60 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import Alert from "@mui/material/Alert";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import PersonIcon from "@mui/icons-material/Person";
-import AddIcon from "@mui/icons-material/Add";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { Link as RouterLink } from "react-router-dom";
-import { createProfile, deleteProfile, getProfiles, updateProfile } from "../../services/profiles";
-import type { Profile } from "../../types/api";
-import ProfileFormDialog from "./ProfileFormDialog";
-import ConfirmDialog from "../../components/ConfirmDialog";
+
+import { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CircularProgress,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  DeleteOutline as DeleteOutlineIcon,
+  EditOutlined as EditOutlinedIcon,
+  People as PeopleIcon,
+  Refresh as RefreshIcon,
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
+
+import {
+  createProfile,
+  deleteProfile,
+  getProfiles,
+  updateProfile,
+} from '../../services/profiles';
+import type { Profile } from '../../types/api';
+import ProfileFormDialog from './ProfileFormDialog';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import Placeholder from '../../components/Placeholder';
+
+function EmptyState({ onCreate }: { onCreate: () => void }) {
+  return (
+    <Placeholder
+      Icon={PeopleIcon}
+      title="No profiles found"
+      subtitle="Get started by creating a new profile for yourself or a family member."
+      actions={
+        <Button onClick={onCreate} variant="contained" startIcon={<AddIcon />}>
+          Create Profile
+        </Button>
+      }
+    />
+  );
+}
 
 export default function ProfilesListPage() {
   const qc = useQueryClient();
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<Profile[]>({
-    queryKey: ["profiles"],
+    queryKey: ['profiles'],
     queryFn: getProfiles,
   });
 
@@ -35,7 +66,7 @@ export default function ProfilesListPage() {
   const createMut = useMutation({
     mutationFn: (payload: { name: string }) => createProfile(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profiles"] });
+      qc.invalidateQueries({ queryKey: ['profiles'] });
       setCreateOpen(false);
     },
   });
@@ -43,7 +74,7 @@ export default function ProfilesListPage() {
   const updateMut = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => updateProfile(id, { name }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profiles"] });
+      qc.invalidateQueries({ queryKey: ['profiles'] });
       setEditOpen(false);
       setSelected(null);
     },
@@ -52,7 +83,7 @@ export default function ProfilesListPage() {
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteProfile(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profiles"] });
+      qc.invalidateQueries({ queryKey: ['profiles'] });
       setDeleteOpen(false);
       setSelected(null);
     },
@@ -74,23 +105,30 @@ export default function ProfilesListPage() {
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ sm: 'center' }}
+        justifyContent="space-between"
+        gap={2}
+        sx={{ mb: 3 }}
+      >
         <Typography variant="h4" fontWeight={700}>
           Profiles
         </Typography>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} alignSelf={{ xs: 'flex-end', sm: 'auto' }}>
           <Button
             onClick={() => refetch()}
             variant="outlined"
             startIcon={<RefreshIcon />}
             disabled={isFetching}
           >
-            {isFetching ? "Refreshing..." : "Refresh"}
+            {isFetching ? 'Refreshing...' : 'Refresh'}
           </Button>
           <Button
             onClick={() => setCreateOpen(true)}
             variant="contained"
             startIcon={<AddIcon />}
+            disableElevation
           >
             New Profile
           </Button>
@@ -103,87 +141,65 @@ export default function ProfilesListPage() {
           <Typography>Loading profiles...</Typography>
         </Stack>
       ) : isError ? (
-        <Alert severity="error">{(error as any)?.message || "Failed to load profiles"}</Alert>
+        <Alert severity="error">{(error as any)?.message || 'Failed to load profiles'}</Alert>
       ) : (
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
-            gap: 2,
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+            gap: 3,
           }}
         >
           {(data || []).length === 0 ? (
-            <Paper sx={{ p: 4, textAlign: "center", borderRadius: 2 }}>
-              <Stack spacing={1.5} alignItems="center">
-                <PersonIcon color="primary" sx={{ fontSize: 40 }} />
-                <Typography color="text.secondary">No profiles found.</Typography>
-                <Button
-                  onClick={() => setCreateOpen(true)}
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                >
-                  Create your first profile
-                </Button>
-              </Stack>
-            </Paper>
+            <EmptyState onCreate={() => setCreateOpen(true)} />
           ) : (
             (data || []).map((p) => (
-              <Paper
-                key={p.id}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  transition: "all 0.2s ease",
-                  "&:hover": { boxShadow: 3, transform: "translateY(-2px)" },
-                }}
-              >
-                <Stack spacing={1.25}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <PersonIcon color="primary" />
+              <Card key={p.id}>
+                <CardContent>
+                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
+                    <PeopleIcon color="primary" />
                     <Stack spacing={0.5} flex={1}>
                       <Typography fontWeight={600}>{p.name}</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Created: {new Date(p.createdAt).toLocaleString()}
+                        Created: {new Date(p.createdAt).toLocaleDateString()}
                       </Typography>
                     </Stack>
                   </Stack>
-
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      component={RouterLink}
-                      to={`/app/profiles/${p.id}/medicines`}
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'flex-end', gap: 0.5 }}>
+                  <Button
+                    component={RouterLink}
+                    to={`/app/profiles/${p.id}/medicines`}
+                    size="small"
+                    startIcon={<VisibilityIcon />}
+                  >
+                    View Medicines
+                  </Button>
+                  <Tooltip title="Edit">
+                    <IconButton
                       size="small"
-                      variant="outlined"
-                      startIcon={<VisibilityIcon />}
-                    >
-                      Open
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="text"
-                      startIcon={<EditOutlinedIcon />}
                       onClick={() => {
                         setSelected(p);
                         setEditOpen(true);
                       }}
                     >
-                      Edit
-                    </Button>
-                    <Button
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
                       size="small"
                       color="error"
-                      variant="text"
-                      startIcon={<DeleteOutlineIcon />}
                       onClick={() => {
                         setSelected(p);
                         setDeleteOpen(true);
                       }}
                     >
-                      Delete
-                    </Button>
-                  </Stack>
-                </Stack>
-              </Paper>
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </CardActions>
+              </Card>
             ))
           )}
         </Box>
@@ -193,7 +209,7 @@ export default function ProfilesListPage() {
       <ProfileFormDialog
         open={createOpen}
         title="Create Profile"
-        submitLabel={createMut.isPending ? "Creating..." : "Create"}
+        submitLabel={createMut.isPending ? 'Creating...' : 'Create'}
         submitting={createMut.isPending}
         onClose={() => setCreateOpen(false)}
         onSubmit={onCreate}
@@ -201,9 +217,10 @@ export default function ProfilesListPage() {
 
       {/* Edit */}
       <ProfileFormDialog
+        key={selected?.id}
         open={editOpen}
         title="Edit Profile"
-        submitLabel={updateMut.isPending ? "Saving..." : "Save"}
+        submitLabel={updateMut.isPending ? 'Saving...' : 'Save'}
         submitting={updateMut.isPending}
         initialValues={{ name: selected?.name }}
         onClose={() => {
@@ -217,8 +234,10 @@ export default function ProfilesListPage() {
       <ConfirmDialog
         open={deleteOpen}
         title="Delete profile?"
-        message={`This will permanently remove "${selected?.name ?? ""}". This action cannot be undone.`}
-        confirmLabel={deleteMut.isPending ? "Deleting..." : "Delete"}
+        message={`This will permanently remove "${
+          selected?.name ?? ''
+        }". This action cannot be undone.`}
+        confirmLabel={deleteMut.isPending ? 'Deleting...' : 'Delete'}
         loading={deleteMut.isPending}
         confirmColor="error"
         onClose={() => {

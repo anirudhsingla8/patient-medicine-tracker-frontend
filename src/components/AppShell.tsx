@@ -1,29 +1,39 @@
+
 import { useState } from 'react';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import IconButton from '@mui/material/IconButton';
-import Drawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Divider from '@mui/material/Divider';
-import LogoutIcon from '@mui/icons-material/Logout';
-import MenuIcon from '@mui/icons-material/Menu';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import MedicationIcon from '@mui/icons-material/Medication';
-import PeopleIcon from '@mui/icons-material/People';
-import { Link as RouterLink, useNavigate, Outlet } from 'react-router-dom';
+import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom';
+import {
+  AppBar,
+  Box,
+  Button,
+  Container,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Stack,
+  Toolbar,
+} from '@mui/material';
+import {
+  Brightness4 as Brightness4Icon,
+  Brightness7 as Brightness7Icon,
+  Dashboard as DashboardIcon,
+  Logout as LogoutIcon,
+  Medication as MedicationIcon,
+  Menu as MenuIcon,
+  People as PeopleIcon,
+} from '@mui/icons-material';
+
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
+import Logo from './Logo';
 
 export default function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const logout = useAuthStore((s) => s.logout);
+  const { mode, toggleMode } = useThemeStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -37,11 +47,9 @@ export default function AppShell() {
     <Box
       role="presentation"
       onClick={handleDrawerToggle}
-      sx={{ width: 260, p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}
+      sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}
     >
-      <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
-        Medicine Tracker
-      </Typography>
+      <Logo sx={{ mb: 2 }} />
       <Divider sx={{ mb: 1 }} />
       <List>
         <ListItemButton component={RouterLink} to="/app/dashboard">
@@ -77,8 +85,8 @@ export default function AppShell() {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
-      <AppBar position="sticky" color="default">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppBar position="sticky">
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ gap: 2, py: 1 }}>
             {/* Mobile menu button */}
@@ -87,30 +95,40 @@ export default function AppShell() {
               color="inherit"
               aria-label="menu"
               onClick={handleDrawerToggle}
-              sx={{ display: { xs: 'inline-flex', md: 'none' }, mr: 1 }}
+              sx={{ display: { xs: 'inline-flex', md: 'none' } }}
             >
               <MenuIcon />
             </IconButton>
 
-            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
-              Medicine Tracker
-            </Typography>
+            {/* Logo */}
+            <Logo sx={{ flexGrow: 1 }} />
 
             {/* Desktop nav */}
             <Stack direction="row" spacing={1} sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <Button color="inherit" component={RouterLink} to="/app/dashboard">
+              <Button component={RouterLink} to="/app/dashboard" color="inherit">
                 Dashboard
               </Button>
-              <Button color="inherit" component={RouterLink} to="/app/medicines">
+              <Button component={RouterLink} to="/app/medicines" color="inherit">
                 Medicines
               </Button>
-              <Button color="inherit" component={RouterLink} to="/app/profiles">
+              <Button component={RouterLink} to="/app/profiles" color="inherit">
                 Profiles
               </Button>
-              <Button color="inherit" startIcon={<LogoutIcon />} onClick={handleLogout}>
-                Logout
-              </Button>
             </Stack>
+
+            {/* Theme toggle */}
+            <IconButton onClick={toggleMode} color="inherit" sx={{ ml: 1 }}>
+              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+
+            <Button
+              color="inherit"
+              startIcon={<LogoutIcon />}
+              onClick={handleLogout}
+              sx={{ display: { xs: 'none', md: 'flex' } }}
+            >
+              Logout
+            </Button>
           </Toolbar>
         </Container>
       </AppBar>
@@ -129,7 +147,7 @@ export default function AppShell() {
         {DrawerContent}
       </Drawer>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" component="main" sx={{ py: 4 }}>
         <Outlet />
       </Container>
     </Box>

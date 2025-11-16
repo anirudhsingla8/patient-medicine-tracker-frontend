@@ -1,17 +1,20 @@
+
 import { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import Paper from '@mui/material/Paper';
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import Alert from '@mui/material/Alert';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import {
+  Alert,
+  Button,
+  IconButton,
+  InputAdornment,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+
 import { forgotPassword } from '../../services/auth';
+import AuthLayout from './AuthLayout';
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -44,7 +47,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     try {
       await forgotPassword({ email, newPassword: password }, { remember: true });
-      navigate('/login', { replace: true, state: { message: 'Password changed successfully. Please sign in.' } });
+      navigate('/login', {
+        replace: true,
+        state: { message: 'Password changed successfully. Please sign in.' },
+      });
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -57,82 +63,94 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', px: 2, py: { xs: 4, md: 6 }, background: 'linear-gradient(180deg, #eef2ff 0%, #f5f7fb 100%)' }}>
-      <Paper sx={{ p: { xs: 2.5, sm: 4 }, width: '100%', maxWidth: 480, borderRadius: 3 }}>
-        <Stack spacing={2} component="form" onSubmit={handleSubmit}>
-          <Stack spacing={0.5} sx={{ textAlign: 'center', mb: 1 }}>
-            <Typography variant="h5" fontWeight={700}>Reset your password</Typography>
-            <Typography variant="body2" color="text.secondary">Enter your email and a new password</Typography>
-          </Stack>
+    <AuthLayout>
+      <Stack spacing={0.5} sx={{ textAlign: 'center' }}>
+        <Typography variant="h5" fontWeight={700}>
+          Reset your password
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Enter your email and a new password
+        </Typography>
+      </Stack>
 
-          {error && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity="error">{error}</Alert>}
 
-          <TextField
-            required
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmailInput(e.target.value)}
-            autoComplete="email"
-            fullWidth
-          />
-          <TextField
-            required
-            type={showPassword ? 'text' : 'password'}
-            label="New password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            fullWidth
-            helperText="At least 6 characters"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    onClick={() => setShowPassword((v) => !v)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            required
-            type={showConfirm ? 'text' : 'password'}
-            label="Confirm new password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            autoComplete="new-password"
-            fullWidth
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label={showConfirm ? 'Hide password' : 'Show password'}
-                    onClick={() => setShowConfirm((v) => !v)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    edge="end"
-                  >
-                    {showConfirm ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Stack spacing={2} component="form" onSubmit={handleSubmit}>
+        <TextField
+          required
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmailInput(e.target.value)}
+          autoComplete="email"
+          fullWidth
+        />
+        <TextField
+          required
+          type={showPassword ? 'text' : 'password'}
+          label="New password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          fullWidth
+          helperText="At least 6 characters"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((v) => !v)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          required
+          type={showConfirm ? 'text' : 'password'}
+          label="Confirm new password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          autoComplete="new-password"
+          fullWidth
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowConfirm((v) => !v)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  edge="end"
+                >
+                  {showConfirm ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
 
-          <Button type="submit" variant="contained" size="large" fullWidth disabled={loading}>
-            {loading ? 'Resetting...' : 'Reset password'}
-          </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          fullWidth
+          disabled={loading}
+          disableElevation
+        >
+          {loading ? 'Resetting...' : 'Reset password'}
+        </Button>
+      </Stack>
 
-          <Button component={RouterLink} to="/login" sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            Back to sign in
-          </Button>
-        </Stack>
-      </Paper>
-    </Box>
+      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+        Remember your password?{' '}
+        <Link component={RouterLink} to="/login" fontWeight={600}>
+          Sign in
+        </Link>
+      </Typography>
+    </AuthLayout>
   );
 }

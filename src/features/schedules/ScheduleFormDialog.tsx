@@ -1,22 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import Typography from "@mui/material/Typography";
+
+import { useMemo, useState } from 'react';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Switch,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 export type ScheduleFormValues = {
   timeOfDay: string; // HH:mm:ss
-  frequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "CUSTOM";
+  frequency: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'CUSTOM';
   isActive: boolean;
 };
 
@@ -30,36 +33,27 @@ type Props = {
   onSubmit: (values: ScheduleFormValues) => void | Promise<void>;
 };
 
-const TIME_REGEX =
-  /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/; // 00:00:00 - 23:59:59
+const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/; // 00:00:00 - 23:59:59
 
 export default function ScheduleFormDialog({
   open,
-  title = "Schedule",
-  submitLabel = "Save",
+  title = 'Schedule',
+  submitLabel = 'Save',
   initialValues,
   submitting = false,
   onClose,
   onSubmit,
 }: Props) {
   const [values, setValues] = useState<ScheduleFormValues>({
-    timeOfDay: initialValues?.timeOfDay ?? "08:00:00",
-    frequency: initialValues?.frequency ?? "DAILY",
+    timeOfDay: initialValues?.timeOfDay ?? '08:00:00',
+    frequency: initialValues?.frequency ?? 'DAILY',
     isActive: initialValues?.isActive ?? true,
   });
 
-  useEffect(() => {
-    setValues({
-      timeOfDay: initialValues?.timeOfDay ?? "08:00:00",
-      frequency: initialValues?.frequency ?? "DAILY",
-      isActive: initialValues?.isActive ?? true,
-    });
-  }, [initialValues, open]);
-
   const timeError = useMemo(() => {
     const t = values.timeOfDay.trim();
-    if (!t) return "Time is required";
-    if (!TIME_REGEX.test(t)) return "Use HH:mm:ss (e.g., 08:00:00)";
+    if (!t) return 'Time is required';
+    if (!TIME_REGEX.test(t)) return 'Use HH:mm:ss (e.g., 08:00:00)';
     return undefined;
   }, [values.timeOfDay]);
 
@@ -85,8 +79,8 @@ export default function ScheduleFormDialog({
             value={values.timeOfDay}
             onChange={(e) => setValues((v) => ({ ...v, timeOfDay: e.target.value }))}
             error={!!timeError}
-            helperText={timeError ?? "Enter time in 24h HH:mm:ss"}
-            inputProps={{ inputMode: "numeric", maxLength: 8 }}
+            helperText={timeError ?? 'Enter time in 24h HH:mm:ss'}
+            inputProps={{ inputMode: 'numeric', maxLength: 8 }}
             required
             autoFocus
           />
@@ -98,7 +92,10 @@ export default function ScheduleFormDialog({
               label="Frequency"
               value={values.frequency}
               onChange={(e) =>
-                setValues((v) => ({ ...v, frequency: e.target.value as ScheduleFormValues["frequency"] }))
+                setValues((v) => ({
+                  ...v,
+                  frequency: e.target.value as ScheduleFormValues['frequency'],
+                }))
               }
             >
               <MenuItem value="DAILY">Daily</MenuItem>
@@ -128,7 +125,7 @@ export default function ScheduleFormDialog({
           Cancel
         </Button>
         <Button onClick={handleSubmit} variant="contained" disabled={!canSubmit || submitting}>
-          {submitting ? "Saving..." : submitLabel}
+          {submitting ? 'Saving...' : submitLabel}
         </Button>
       </DialogActions>
     </Dialog>

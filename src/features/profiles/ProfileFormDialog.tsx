@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
+
+import { useState } from 'react';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+} from '@mui/material';
 
 export type ProfileFormValues = {
   name: string;
@@ -23,22 +26,16 @@ type Props = {
 
 export default function ProfileFormDialog({
   open,
-  title = "Profile",
-  submitLabel = "Save",
+  title = 'Profile',
+  submitLabel = 'Save',
   initialValues,
   submitting = false,
   onClose,
   onSubmit,
 }: Props) {
   const [values, setValues] = useState<ProfileFormValues>({
-    name: initialValues?.name ?? "",
+    name: initialValues?.name ?? '',
   });
-
-  useEffect(() => {
-    setValues({
-      name: initialValues?.name ?? "",
-    });
-  }, [initialValues, open]);
 
   const canSubmit = values.name.trim().length >= 1;
 
@@ -64,13 +61,11 @@ export default function ProfileFormDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>Cancel</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!canSubmit || submitting}
-        >
-          {submitting ? "Saving..." : submitLabel}
+        <Button onClick={onClose} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={!canSubmit || submitting}>
+          {submitting ? 'Saving...' : submitLabel}
         </Button>
       </DialogActions>
     </Dialog>
