@@ -40,6 +40,9 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
+import { eventBus } from '../utils/eventBus';
+import { extractErrorMessage } from '../utils/errorUtils';
+
 // Global error handling: normalize errors and handle auth failures
 axiosClient.interceptors.response.use(
   (res) => res,
@@ -58,6 +61,11 @@ axiosClient.interceptors.response.use(
           window.location.assign(`/login?${params.toString()}`);
         }
       }
+    } else {
+      // Trigger global error snackbar for other errors (400, 404, 500, etc.)
+      // We avoid triggering it for 401/403 as the redirect handles it (or we could show a message too)
+      const message = extractErrorMessage(error);
+      eventBus.emit('error', message);
     }
 
     return Promise.reject(error);

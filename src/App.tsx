@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { SnackbarProvider, useSnackbar } from 'notistack';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AppShell from './components/AppShell';
 import LoginPage from './features/auth/LoginPage';
@@ -9,8 +11,21 @@ import MedicinesListPage from './features/medicines/pages/MedicinesListPage';
 import ProfilesListPage from './features/profiles/ProfilesListPage';
 import ProfileMedicinesListPage from './features/medicines/pages/ProfileMedicinesListPage';
 import SchedulesListPage from './features/schedules/SchedulesListPage';
+import { eventBus } from './utils/eventBus';
 
-export default function App() {
+function AppContent() {
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    const handleError = (msg: any) => {
+      enqueueSnackbar(msg, { variant: 'error' });
+    };
+    eventBus.on('error', handleError);
+    return () => {
+      eventBus.off('error', handleError);
+    };
+  }, [enqueueSnackbar]);
+
   return (
     <Routes>
       {/* Public routes */}
@@ -36,5 +51,13 @@ export default function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
     </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+      <AppContent />
+    </SnackbarProvider>
   );
 }
