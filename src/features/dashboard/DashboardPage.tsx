@@ -25,7 +25,7 @@ export default function DashboardPage() {
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 4 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" spacing={2} sx={{ mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={800} gutterBottom>
             Dashboard

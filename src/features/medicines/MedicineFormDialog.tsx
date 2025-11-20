@@ -24,7 +24,12 @@ type Props = {
   onClose: () => void;
 };
 
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 export default function MedicineFormDialog({ open, profileId, onClose }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const qc = useQueryClient();
 
   const [name, setName] = useState('');
@@ -141,7 +146,7 @@ export default function MedicineFormDialog({ open, profileId, onClose }: Props) 
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
       <DialogTitle>Add medicine</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>

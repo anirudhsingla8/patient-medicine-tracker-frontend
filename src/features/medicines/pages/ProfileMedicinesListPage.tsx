@@ -122,7 +122,7 @@ export default function ProfileMedicinesListPage() {
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+      <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Stack spacing={0.5}>
           <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 0.5 }}>
             <Link component={RouterLink} color="inherit" to="/app/dashboard">
@@ -139,18 +139,19 @@ export default function ProfileMedicinesListPage() {
               {isProfileLoading
                 ? 'Loading...'
                 : isProfileError
-                ? 'Profile'
-                : `Medicines • ${profile?.name ?? 'Profile'}`}
+                  ? 'Profile'
+                  : `Medicines • ${profile?.name ?? 'Profile'}`}
             </Typography>
           </Stack>
         </Stack>
 
-        <Stack direction="row" spacing={1}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Button
             component={RouterLink}
             to="/app/profiles"
             variant="text"
             startIcon={<ArrowBackIcon />}
+            sx={{ justifyContent: { xs: 'flex-start', sm: 'center' } }}
           >
             Back to Profiles
           </Button>
@@ -193,63 +194,192 @@ export default function ProfileMedicinesListPage() {
       ) : isError ? (
         <Alert severity="error">{(error as any)?.message || 'Failed to load medicines'}</Alert>
       ) : (
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          <Table size="small" sx={{ minWidth: 650 }}>
-            <TableHead sx={{ bgcolor: 'grey.50' }}>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Dosage</TableCell>
-                <TableCell>Quantity</TableCell>
-                <TableCell>Expiry</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filtered.length === 0 ? (
+        <>
+          {/* Desktop/Tablet Table View */}
+          <TableContainer component={Paper} sx={{ display: { xs: 'none', md: 'block' }, overflowX: 'auto' }}>
+            <Table size="small" sx={{ minWidth: 650 }}>
+              <TableHead sx={{ bgcolor: 'grey.50' }}>
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <Typography color="text.secondary">No medicines found for this profile.</Typography>
-                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Dosage</TableCell>
+                  <TableCell>Quantity</TableCell>
+                  <TableCell>Expiry</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ) : (
-                filtered.map((m) => {
-                  const qtyLow = m.quantity <= 5;
-                  return (
-                    <TableRow key={m.id} hover>
-                      <TableCell>
-                        <Stack spacing={0.5}>
-                          <Typography fontWeight={600}>{m.name}</Typography>
+              </TableHead>
+              <TableBody>
+                {filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Typography color="text.secondary">No medicines found for this profile.</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filtered.map((m) => {
+                    const qtyLow = m.quantity <= 5;
+                    return (
+                      <TableRow key={m.id} hover>
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            <Typography fontWeight={600}>{m.name}</Typography>
+                            {m.category && (
+                              <Typography variant="body2" color="text.secondary">
+                                {m.category}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>{m.dosage || '-'}</TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography>{m.quantity}</Typography>
+                            {qtyLow && <Chip size="small" label="Low" color="warning" />}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>{m.expiryDate || '-'}</TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Chip
+                              size="small"
+                              label={m.status}
+                              color={m.status === 'ACTIVE' ? 'success' : 'default'}
+                            />
+                            <ExpiryChip expiryDate={m.expiryDate} />
+                          </Stack>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <Button
+                              size="small"
+                              variant="text"
+                              startIcon={<EditOutlinedIcon />}
+                              onClick={() => {
+                                setSelected(m);
+                                setEditOpen(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="small"
+                              color="error"
+                              variant="text"
+                              startIcon={<DeleteOutlineIcon />}
+                              onClick={() => {
+                                setSelected(m);
+                                setDeleteOpen(true);
+                              }}
+                            >
+                              Delete
+                            </Button>
+                            <Button
+                              size="small"
+                              component={RouterLink}
+                              to={`/app/medicines/${m.id}/schedules`}
+                              variant="outlined"
+                              startIcon={<ScheduleIcon />}
+                            >
+                              Schedules
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<MedicationIcon />}
+                              onClick={() => takeDoseMut.mutate(m.id)}
+                              disabled={takingId === m.id}
+                            >
+                              {takingId === m.id ? '...' : 'Take'}
+                            </Button>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Mobile Card View */}
+          <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+            {filtered.length === 0 ? (
+              <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3 }}>
+                <Typography color="text.secondary">No medicines found for this profile.</Typography>
+              </Paper>
+            ) : (
+              filtered.map((m) => {
+                const qtyLow = m.quantity <= 5;
+                return (
+                  <Paper key={m.id} sx={{ p: 2, borderRadius: 3 }}>
+                    <Stack spacing={2}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="start">
+                        <Box>
+                          <Typography fontWeight={700} variant="h6">{m.name}</Typography>
                           {m.category && (
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                               {m.category}
                             </Typography>
                           )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>{m.dosage || '-'}</TableCell>
-                      <TableCell>
+                        </Box>
+                        <Chip
+                          size="small"
+                          label={m.status}
+                          color={m.status === 'ACTIVE' ? 'success' : 'default'}
+                          variant={m.status === 'ACTIVE' ? 'filled' : 'outlined'}
+                        />
+                      </Stack>
+
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Dosage</Typography>
+                          <Typography variant="body2">{m.dosage || '-'}</Typography>
+                        </Box>
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography variant="caption" color="text.secondary">Expiry</Typography>
+                          <Typography variant="body2">{m.expiryDate || '-'}</Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 1, borderTop: '1px solid #eee' }}>
                         <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography>{m.quantity}</Typography>
-                          {qtyLow && <Chip size="small" label="Low" color="warning" />}
+                          <Typography variant="body2" fontWeight={500}>Qty: {m.quantity}</Typography>
+                          {qtyLow && (
+                            <Chip
+                              size="small"
+                              label="Low"
+                              color="warning"
+                              variant="outlined"
+                              sx={{ height: 20, fontSize: '0.7rem' }}
+                            />
+                          )}
                         </Stack>
-                      </TableCell>
-                      <TableCell>{m.expiryDate || '-'}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Chip
-                            size="small"
-                            label={m.status}
-                            color={m.status === 'ACTIVE' ? 'success' : 'default'}
-                          />
-                          <ExpiryChip expiryDate={m.expiryDate} />
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <ExpiryChip expiryDate={m.expiryDate} />
+                      </Stack>
+
+                      <Stack spacing={1}>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          startIcon={<MedicationIcon />}
+                          onClick={() => takeDoseMut.mutate(m.id)}
+                          disabled={takingId === m.id}
+                        >
+                          {takingId === m.id ? 'Recording Dose...' : 'Take Dose'}
+                        </Button>
+                        <Stack direction="row" spacing={1}>
                           <Button
-                            size="small"
-                            variant="text"
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<ScheduleIcon />}
+                            component={RouterLink}
+                            to={`/app/medicines/${m.id}/schedules`}
+                          >
+                            Schedule
+                          </Button>
+                          <Button
+                            fullWidth
+                            variant="outlined"
                             startIcon={<EditOutlinedIcon />}
                             onClick={() => {
                               setSelected(m);
@@ -259,44 +389,25 @@ export default function ProfileMedicinesListPage() {
                             Edit
                           </Button>
                           <Button
-                            size="small"
+                            variant="outlined"
                             color="error"
-                            variant="text"
-                            startIcon={<DeleteOutlineIcon />}
+                            sx={{ minWidth: 'auto' }}
                             onClick={() => {
                               setSelected(m);
                               setDeleteOpen(true);
                             }}
                           >
-                            Delete
-                          </Button>
-                          <Button
-                            size="small"
-                            component={RouterLink}
-                            to={`/app/medicines/${m.id}/schedules`}
-                            variant="outlined"
-                            startIcon={<ScheduleIcon />}
-                          >
-                            Manage schedules
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="contained"
-                            startIcon={<MedicationIcon />}
-                            onClick={() => takeDoseMut.mutate(m.id)}
-                            disabled={takingId === m.id}
-                          >
-                            {takingId === m.id ? 'Recording...' : 'Take dose'}
+                            <DeleteOutlineIcon />
                           </Button>
                         </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                );
+              })
+            )}
+          </Stack>
+        </>
       )}
       {profileId && (
         <MedicineFormDialog

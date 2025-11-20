@@ -50,8 +50,8 @@ export default function LoginPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', px: 2, py: { xs: 4, md: 6 }, background: 'linear-gradient(180deg, #eef2ff 0%, #f5f7fb 100%)' }}>
-      <Paper sx={{ p: { xs: 2.5, sm: 4 }, width: '100%', maxWidth: 440, borderRadius: 3 }}>
+    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', px: { xs: 0, sm: 2 }, py: { xs: 0, md: 6 }, background: { xs: '#fff', sm: 'linear-gradient(180deg, #eef2ff 0%, #f5f7fb 100%)' } }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: { xs: '100%', sm: 440 }, borderRadius: { xs: 0, sm: 3 }, boxShadow: { xs: 'none', sm: 3 }, minHeight: { xs: '100vh', sm: 'auto' } }}>
         <Stack spacing={2} component="form" onSubmit={handleSubmit}>
           <Stack spacing={0.5} sx={{ textAlign: 'center', mb: 1 }}>
             <Typography variant="h5" fontWeight={700}>Medicine Tracker</Typography>
