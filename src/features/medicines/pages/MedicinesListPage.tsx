@@ -20,14 +20,7 @@ import Link from '@mui/material/Link';
 import { Link as RouterLink } from 'react-router-dom';
 import { getAllMedicines } from '../../../services/medicines';
 import type { Medicine } from '../../../types/api';
-
-function daysUntil(dateStr?: string) {
-  if (!dateStr) return undefined;
-  const target = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  return diff;
-}
+import { daysUntil } from '../../../utils/dateUtils';
 
 function ExpiryChip({ expiryDate }: { expiryDate?: string }) {
   const d = daysUntil(expiryDate);

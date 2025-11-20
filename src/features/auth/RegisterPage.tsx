@@ -11,7 +11,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { extractErrorMessage } from '../../services/axiosClient';
+import { extractErrorMessage } from '../../utils/errorUtils';
 import { register } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
 

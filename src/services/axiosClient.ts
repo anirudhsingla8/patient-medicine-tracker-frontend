@@ -23,30 +23,6 @@ function clearTokens() {
   }
 }
 
-export function extractErrorMessage(error: unknown): string {
-  try {
-    const anyErr = error as any;
-    if (anyErr?.response) {
-      const data = anyErr.response.data;
-      if (typeof data === 'string') return data;
-      if (typeof data?.message === 'string' && data.message) return data.message;
-      if (typeof data?.error === 'string' && data.error) return data.error;
-      if (Array.isArray(data?.errors) && data.errors.length) {
-        const first = data.errors[0];
-        if (typeof first === 'string') return first;
-        if (typeof (first as any)?.message === 'string') return (first as any).message;
-      }
-      if (Array.isArray(data?.details) && data.details.length) {
-        const first = data.details[0];
-        if (typeof first === 'string') return first;
-        if (typeof (first as any)?.message === 'string') return (first as any).message;
-      }
-    }
-    if ((anyErr as any)?.message) return (anyErr as any).message as string;
-  } catch {}
-  return 'Something went wrong. Please try again.';
-}
-
 export const axiosClient = axios.create({
   baseURL: API_BASE,
   headers: {
@@ -59,7 +35,7 @@ axiosClient.interceptors.request.use((config) => {
   const token = getStoredToken();
   if (token) {
     config.headers = config.headers || {};
-    (config.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    config.headers['Authorization'] = `Bearer ${token}`;
   }
   return config;
 });
@@ -84,7 +60,6 @@ axiosClient.interceptors.response.use(
       }
     }
 
-    // Always reject so callers can display messages via extractErrorMessage
     return Promise.reject(error);
   }
 );

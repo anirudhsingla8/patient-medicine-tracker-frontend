@@ -11,8 +11,7 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { extractErrorMessage } from '../../services/axiosClient';
-import type { Medicine } from '../../types/api';
+import { extractErrorMessage } from '../../utils/errorUtils';
 import {
   createMedicine,
   uploadMedicineImage,
